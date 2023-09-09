@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Catalog
+{% endblock %}
+
+{% block content %}
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); grid-gap: 16px">
+    {% for book in books %}
+      {% include 'bookshop/includes/book_card.html'%}
+    {% endfor %}
+  </div>
+{% endblock %}

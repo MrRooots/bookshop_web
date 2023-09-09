@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Add new
+{% endblock %}
+
+{% block content %}
+  <form class="form-control" action="{% url 'book_create_url' %}" method="POST">
+    {% csrf_token %}
+
+    <div class="container">
+      {% for field in form %}
+        <div class="form-group">
+          {% if field.errors %}
+            <div class="alert alert-danger">
+              {{ field.errors }}
+            </div>
+          {% endif %}
+          {{ field.label }}
+          {{ field }}
+        </div>
+      {% endfor %}
+
+      {% if not publishers %}
+        <label for="publisherSelect" class="form-label">Publisher</label>
+        <select id="publisherSelect" class="form-select">
+          {% for publisher in publishers %}
+            <option>{{ publisher.title }}</option>
+          {% endfor %}
+        </select>
+      {% endif %}
+
+      <button type="submit" class="btn btn-primary mt-4">Create Post</button>
+    </div>
+  </form>
+{% endblock %}

@@ -1,2 +1,2 @@
 # bookshop_web
-in process
+in process (without DRF)

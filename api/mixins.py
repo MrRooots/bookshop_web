@@ -4,15 +4,34 @@ from django import views
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 
-from api.forms import ApiBookForm
 
-
-class ApiMultipleObjectsMixin(views.View):
+class BaseMixin(views.View):
   """
-  Base class for list view of objects
+  Base mixins class
   """
   model = None
   form = None
+  PARAMS: dict = None
+
+
+class ApiMultipleObjectsMixin(BaseMixin):
+  """
+  Base class for list view of objects.
+
+  In case of nested objects in JSON override _save_form method.
+  """
+
+  def _save_form(self, data: dict) -> tuple:
+    """ Base save form method for single form """
+    obj, errors = None, None
+    form = self.form(data)
+
+    if form.is_valid():
+      obj = form.save()
+    else:
+      errors = form.errors
+
+    return obj, errors
 
   def get(self, request) -> JsonResponse:
     """ Get list of objects """
@@ -29,33 +48,40 @@ class ApiMultipleObjectsMixin(views.View):
   def post(self, request, *args, **kwargs) -> JsonResponse:
     """ Create new object """
     try:
-      form = self.form(json.loads(request.body))
-    except json.JSONDecodeError:
+      obj, errors = self._save_form(json.loads(request.body))
+      if obj:
+        return JsonResponse({
+          'success': 1,
+          'result': obj.to_json(),
+        }, status=200)
+      else:
+        return JsonResponse({
+          'success': 0,
+          'error_fields': errors,
+        }, status=400)
+    except (json.JSONDecodeError, KeyError):
       return JsonResponse({
         'success': 0,
         'error_fields': {'json': ['Invalid input json.']},
       }, status=400)
 
-    if form.is_valid():
-      obj = form.save()
 
-      return JsonResponse({
-        'success': 1,
-        'result': obj.to_json(),
-      }, status=200)
-
-    return JsonResponse({
-      'success': 0,
-      'error_fields': form.errors,
-    }, status=400)
-
-
-class ApiSingleObjectMixin(views.View):
+class ApiSingleObjectMixin(BaseMixin):
   """
   Base class for operations with single object
   """
-  model = None
-  form = None
+
+  def _save_form(self, data: dict, instance) -> tuple:
+    """ Save form """
+    obj, errors = None, None
+    form = self.form(data, instance=instance)
+
+    if form.is_valid():
+      obj = form.save()
+    else:
+      errors = form.errors
+
+    return obj, errors
 
   def get(self, request, obj_id: int) -> JsonResponse:
     """ Get specific object """
@@ -78,25 +104,22 @@ class ApiSingleObjectMixin(views.View):
 
       # Persist fields that are not in POST
       data.update({k: v for k, v in obj.to_json(to_id=True).items() if k not in data})
+      new_obj, errors = self._save_form(data, obj)
 
-      form = ApiBookForm(data, instance=obj)
-
-      if form.is_valid():
-        new_obj = form.save()
-
+      if new_obj:
         return JsonResponse({
           'success': 1,
-          'book': new_obj.to_json(),
+          'result': new_obj.to_json(),
         }, status=200)
-
-      return JsonResponse({
-        'success': 0,
-        'error_fields': form.errors,
-      }, status=400)
+      else:
+        return JsonResponse({
+          'success': 0,
+          'error_fields': errors,
+        }, status=400)
     except ObjectDoesNotExist:
       return JsonResponse({
         'success': 0,
-        'error': f'Book with id {obj_id} does not exists!'
+        'error': f'{self.model.__name__} with id {obj_id} does not exists!'
       }, status=404)
 
   def delete(self, request, obj_id: int) -> JsonResponse:
@@ -114,13 +137,10 @@ class ApiSingleObjectMixin(views.View):
       }, status=404)
 
 
-class ApiObjectsWhereMixin(views.View):
+class ApiObjectsWhereMixin(BaseMixin):
   """
   Base class for operations with list of filtered objects
   """
-
-  model = None
-  PARAMS: dict = None
 
   def _get_filters(self, params) -> dict:
     """ Get filters from query params """
@@ -132,11 +152,90 @@ class ApiObjectsWhereMixin(views.View):
 
   def get(self, request) -> JsonResponse:
     filters = self._get_filters(request.GET)
-    books = self.model.objects.filter(**filters)
+    objects = self.model.objects.filter(**filters)
 
     return JsonResponse({
       'success': 1,
       'request': filters,
-      'count': books.count(),
-      'result': [book.to_json() for book in books]
+      'count': objects.count(),
+      'result': [obj.to_json() for obj in objects]
     }, status=200)
+
+# class ApiMultipleObjectsWithNestedModelMixin(ApiMultipleObjectsMixin):
+#   """
+#   Base class for list view of objects with nested model
+#   """
+#   nested_model = None
+#   nested_form = None
+#   nested_field = None
+#
+#   def _save_forms(self, data) -> tuple:
+#     """ Save form with all inner forms in order: Parent -> Child -> ... """
+#     obj, errors = None, None
+#     child = []
+#
+#     for form, field in zip(self.nested_form, self.nested_field):
+#       _form = form(data.get(field))
+#
+#       if _form.is_valid():
+#         child.append(_form.save())
+#         del data[field]
+#       else:
+#         if errors is None:
+#           errors = _form.errors
+#         else:
+#           errors.update(_form.errors)
+#
+#     _form = self.form(data)
+#     if _form.is_valid():
+#       obj = _form.save()
+#
+#       for field, val in zip(self.nested_field, child):
+#         obj.__setattr__(field, val)
+#
+#       obj.save()
+#     else:
+#       if errors is None:
+#         errors = _form.errors
+#       else:
+#         errors.update(_form.errors)
+#
+#     return obj, errors
+#
+#   def post(self, request, *args, **kwargs) -> JsonResponse:
+#     """ Create new object """
+#     try:
+#       obj, errors = self._save_forms(json.loads(request.body))
+#       if obj:
+#         return JsonResponse({
+#           'success': 1,
+#           'result': obj.to_json(),
+#         }, status=200)
+#       else:
+#         return JsonResponse({
+#           'success': 0,
+#           'error_fields': errors,
+#         }, status=400)
+#     except (json.JSONDecodeError, KeyError):
+#       return JsonResponse({
+#         'success': 0,
+#         'error_fields': {'json': ['Invalid input json.']},
+#       }, status=400)
+#
+#
+# class ApiSingleObjectWithNestedModelMixin(BaseMixin):
+#   """
+#   Base class for operations with single object with nested model
+#   """
+#   nested_model = None
+#   nested_form = None
+#   nested_field = None
+#
+#
+# class ApiObjectsWhereWithNestedModelMixin(views.View):
+#   """
+#   Base class for operations with list of filtered objects with nested models
+#   """
+#   nested_model = None
+#   nested_form = None
+#   nested_field = None

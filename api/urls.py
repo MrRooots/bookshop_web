@@ -1,11 +1,7 @@
 from django.urls import path
 from django.views.decorators.csrf import csrf_exempt
 
-from api.views import ApiBooksListView, ApiBookDetailsView, \
-  ApiGenreDetailsView, ApiGenresListView, \
-  ApiPublisherDetailsView, ApiPublishersListView, \
-  ApiAuthorDetailsView, ApiAuthorsListView, ApiBooksWhereView, ApiAuthorsWhereView, ApiGenresWhereView, \
-  ApiPublishersWhereView
+from api.views import *
 
 urlpatterns = [
   path('', ApiBooksListView.as_view()),
@@ -25,4 +21,11 @@ urlpatterns = [
   path('publishers/', csrf_exempt(ApiPublishersListView.as_view())),
   path('publishers/where', csrf_exempt(ApiPublishersWhereView.as_view())),
   path('publishers/<int:obj_id>', csrf_exempt(ApiPublisherDetailsView.as_view())),
+
+  path('customers/', csrf_exempt(ApiCustomersListView.as_view())),
+  path('customers/where', csrf_exempt(ApiCustomersWhereView.as_view())),
+  path('customers/address', csrf_exempt(ApiCustomerAddressListView.as_view())),
+  path('customers/<int:obj_id>', csrf_exempt(ApiCustomerDetailsView.as_view())),
+
+  path('customers/<int:obj_id>/addresses/<int:addr_id>', csrf_exempt(ApiCustomerAddressDetailsView.as_view())),
 ]

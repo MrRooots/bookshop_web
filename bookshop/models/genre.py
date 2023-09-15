@@ -1,4 +1,5 @@
 from django.db import models
+from django.forms import model_to_dict
 from django.utils.text import slugify
 
 
@@ -17,9 +18,4 @@ class Genre(models.Model):
       self.save()
 
   def to_json(self) -> dict:
-    return {
-      'id': self.id,
-      'title': self.title,
-      # 'books': [book.to_json() for book in self.books.all()],
-      # 'slug': self.slug,
-    }
+    return model_to_dict(self, exclude=['slug'])

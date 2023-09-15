@@ -1,7 +1,5 @@
 from api.forms import ApiAuthorForm, ApiGenreForm, ApiPublisherForm, ApiBookForm
-from api.mixins import ApiMultipleObjectsMixin, \
-  ApiSingleObjectMixin, \
-  ApiObjectsWhereMixin
+from api.mixins import ApiMultipleObjectsMixin, ApiSingleObjectMixin, ApiObjectsWhereMixin
 
 from bookshop.models import Author, Genre, Publisher, Book
 

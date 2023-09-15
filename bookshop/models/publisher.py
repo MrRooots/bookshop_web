@@ -1,4 +1,5 @@
 from django.db import models
+from django.forms import model_to_dict
 from django.utils.text import slugify
 
 
@@ -15,7 +16,4 @@ class Publisher(models.Model):
       self.save()
 
   def to_json(self) -> dict:
-    return {
-      'id': self.id,
-      'title': self.title,
-    }
+    return model_to_dict(self, exclude=['slug'])

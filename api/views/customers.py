@@ -45,6 +45,34 @@ class ApiCustomerDetailsView(ApiSingleObjectMixin):
   model = Customer
   form = ApiCustomerForm
 
+  nested_field = 'address'
+  nested_form = ApiAddressForm
+
+  def _save_form(self, data: dict, instance: Customer) -> tuple:
+    obj, errors, address_form = None, None, None
+
+    if data.get(self.nested_field) and isinstance(data[self.nested_field], dict):
+      address_form = self.nested_form(data[self.nested_field],
+                                      instance=instance.addresses)
+      del data[self.nested_field]
+
+    form = self.form(data, instance=instance)
+
+    # Todo: duplication
+    if form.is_valid():
+      obj = form.save()
+
+      if address_form is not None:
+        if address_form.is_valid():
+          obj.addresses.set([address_form.save()], clear=True)
+          obj.save()
+        else:
+          errors = address_form.errors
+    else:
+      errors = form.errors
+
+    return obj, errors
+
 
 class ApiCustomersWhereView(ApiObjectsWhereMixin):
   """
@@ -56,19 +84,3 @@ class ApiCustomersWhereView(ApiObjectsWhereMixin):
             'last_name': 'icontains',
             'email': 'iexact',
             'address': 'iexact'}
-
-
-class ApiCustomerAddressListView(ApiMultipleObjectsMixin):
-  """
-  Views for list of customer addresses
-  """
-  model = Address
-  form = ApiAddressForm
-
-
-class ApiCustomerAddressDetailsView(ApiSingleObjectMixin):
-  """
-  Views for operations with single customer address
-  """
-  model = Address
-  form = ApiAddressForm

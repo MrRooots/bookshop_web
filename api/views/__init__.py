@@ -3,5 +3,4 @@ from .books import ApiBooksListView, ApiBookDetailsView, ApiBooksWhereView, \
   ApiGenresListView, ApiGenreDetailsView, ApiGenresWhereView, \
   ApiPublishersListView, ApiPublisherDetailsView, ApiPublishersWhereView
 
-from .customers import ApiCustomersListView, ApiCustomerDetailsView, ApiCustomersWhereView, \
-  ApiCustomerAddressListView, ApiCustomerAddressDetailsView
+from .customers import ApiCustomersListView, ApiCustomerDetailsView, ApiCustomersWhereView

@@ -69,6 +69,8 @@ class ApiMultipleObjectsMixin(BaseMixin):
 class ApiSingleObjectMixin(BaseMixin):
   """
   Base class for operations with single object
+
+  In case of nested objects in JSON override _save_form method.
   """
 
   def _save_form(self, data: dict, instance) -> tuple:
@@ -103,7 +105,8 @@ class ApiSingleObjectMixin(BaseMixin):
       obj = self.model.objects.get(id=obj_id)
 
       # Persist fields that are not in POST
-      data.update({k: v for k, v in obj.to_json(to_id=True).items() if k not in data})
+      data.update({k: v for k, v in obj.to_json(to_id=True).items()
+                   if k not in data})
       new_obj, errors = self._save_form(data, obj)
 
       if new_obj:
@@ -160,82 +163,3 @@ class ApiObjectsWhereMixin(BaseMixin):
       'count': objects.count(),
       'result': [obj.to_json() for obj in objects]
     }, status=200)
-
-# class ApiMultipleObjectsWithNestedModelMixin(ApiMultipleObjectsMixin):
-#   """
-#   Base class for list view of objects with nested model
-#   """
-#   nested_model = None
-#   nested_form = None
-#   nested_field = None
-#
-#   def _save_forms(self, data) -> tuple:
-#     """ Save form with all inner forms in order: Parent -> Child -> ... """
-#     obj, errors = None, None
-#     child = []
-#
-#     for form, field in zip(self.nested_form, self.nested_field):
-#       _form = form(data.get(field))
-#
-#       if _form.is_valid():
-#         child.append(_form.save())
-#         del data[field]
-#       else:
-#         if errors is None:
-#           errors = _form.errors
-#         else:
-#           errors.update(_form.errors)
-#
-#     _form = self.form(data)
-#     if _form.is_valid():
-#       obj = _form.save()
-#
-#       for field, val in zip(self.nested_field, child):
-#         obj.__setattr__(field, val)
-#
-#       obj.save()
-#     else:
-#       if errors is None:
-#         errors = _form.errors
-#       else:
-#         errors.update(_form.errors)
-#
-#     return obj, errors
-#
-#   def post(self, request, *args, **kwargs) -> JsonResponse:
-#     """ Create new object """
-#     try:
-#       obj, errors = self._save_forms(json.loads(request.body))
-#       if obj:
-#         return JsonResponse({
-#           'success': 1,
-#           'result': obj.to_json(),
-#         }, status=200)
-#       else:
-#         return JsonResponse({
-#           'success': 0,
-#           'error_fields': errors,
-#         }, status=400)
-#     except (json.JSONDecodeError, KeyError):
-#       return JsonResponse({
-#         'success': 0,
-#         'error_fields': {'json': ['Invalid input json.']},
-#       }, status=400)
-#
-#
-# class ApiSingleObjectWithNestedModelMixin(BaseMixin):
-#   """
-#   Base class for operations with single object with nested model
-#   """
-#   nested_model = None
-#   nested_form = None
-#   nested_field = None
-#
-#
-# class ApiObjectsWhereWithNestedModelMixin(views.View):
-#   """
-#   Base class for operations with list of filtered objects with nested models
-#   """
-#   nested_model = None
-#   nested_form = None
-#   nested_field = None

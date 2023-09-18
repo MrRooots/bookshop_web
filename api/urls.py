@@ -24,8 +24,5 @@ urlpatterns = [
 
   path('customers/', csrf_exempt(ApiCustomersListView.as_view())),
   path('customers/where', csrf_exempt(ApiCustomersWhereView.as_view())),
-  path('customers/address', csrf_exempt(ApiCustomerAddressListView.as_view())),
   path('customers/<int:obj_id>', csrf_exempt(ApiCustomerDetailsView.as_view())),
-
-  path('customers/<int:obj_id>/addresses/<int:addr_id>', csrf_exempt(ApiCustomerAddressDetailsView.as_view())),
 ]

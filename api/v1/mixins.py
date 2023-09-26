@@ -2,6 +2,7 @@ import json
 
 from django import views
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.http import JsonResponse
 
 
@@ -14,7 +15,55 @@ class BaseMixin(views.View):
   PARAMS: dict = None
 
 
-class ApiMultipleObjectsMixin(BaseMixin):
+class ApiMultipleFormsMixin(BaseMixin):
+  """
+  Mixin with overloaded _save_form method
+  Adding support for multiple forms hierarchy
+  """
+  nested_fields: dict = None
+
+  @transaction.atomic
+  def _save_form(self, data: dict, instance=None, clear: bool = False) -> tuple:
+    """ Save multiple forms in given order """
+    print('[ApiMultipleFormsMixin]: _save_form called')
+    obj, errors = None, None
+    form_fields = {}
+
+    for field, form in self.nested_fields.items():
+      if data.get(field):
+        if isinstance(data[field], dict):
+          form_fields[field] = [form(data[field])]
+          del data[field]
+        elif isinstance(data[field], list) and data[field] and isinstance(data[field][0], dict):
+          form_fields[field] = [form(d) for d in data[field]]
+          del data[field]
+
+    bound_form = self.form(data, instance=instance)
+
+    if bound_form.is_valid():
+      obj = bound_form.save()
+
+      for field, forms in form_fields.items():
+        for form in forms:
+          if form.is_valid():
+            try:
+              obj.__setattr__(field, form.save())
+            except (ValueError, TypeError):  # Catch for m2m relations
+              if clear:
+                obj.__getattribute__(field).clear()
+
+              obj.__getattribute__(field).add(form.save())
+
+            obj.save()
+          else:
+            errors = errors.update(form.errors) if errors else form.errors
+    else:
+      errors = errors.update(bound_form.errors) if errors else bound_form.errors
+
+    return obj, errors
+
+
+class ApiListViewMixin(BaseMixin):
   """
   Base class for list view of objects.
 
@@ -66,14 +115,14 @@ class ApiMultipleObjectsMixin(BaseMixin):
       }, status=400)
 
 
-class ApiSingleObjectMixin(BaseMixin):
+class ApiDetailsMixin(BaseMixin):
   """
   Base class for operations with single object
 
   In case of nested objects in JSON override _save_form method.
   """
 
-  def _save_form(self, data: dict, instance) -> tuple:
+  def _save_form(self, data: dict, instance, **kwargs) -> tuple:
     """ Save form """
     obj, errors = None, None
     form = self.form(data, instance=instance)
@@ -140,7 +189,7 @@ class ApiSingleObjectMixin(BaseMixin):
       }, status=404)
 
 
-class ApiObjectsWhereMixin(BaseMixin):
+class ApiFilteringMixin(BaseMixin):
   """
   Base class for operations with list of filtered objects
   """

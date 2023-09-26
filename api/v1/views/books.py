@@ -1,10 +1,10 @@
-from api.forms import ApiAuthorForm, ApiGenreForm, ApiPublisherForm, ApiBookForm
-from api.mixins import ApiMultipleObjectsMixin, ApiSingleObjectMixin, ApiObjectsWhereMixin
+from api.v1.forms import ApiAuthorForm, ApiGenreForm, ApiPublisherForm, ApiBookForm
+from api.v1.mixins import ApiListViewMixin, ApiDetailsMixin, ApiFilteringMixin
 
 from bookshop.models import Author, Genre, Publisher, Book
 
 
-class ApiBooksListView(ApiMultipleObjectsMixin):
+class ApiBooksListView(ApiListViewMixin):
   """
   Views for list of books
   """
@@ -12,7 +12,7 @@ class ApiBooksListView(ApiMultipleObjectsMixin):
   form = ApiBookForm
 
 
-class ApiBookDetailsView(ApiSingleObjectMixin):
+class ApiBookDetailsView(ApiDetailsMixin):
   """
   Views for operations with single book
   """
@@ -20,7 +20,7 @@ class ApiBookDetailsView(ApiSingleObjectMixin):
   form = ApiBookForm
 
 
-class ApiBooksWhereView(ApiObjectsWhereMixin):
+class ApiBooksWhereView(ApiFilteringMixin):
   """
   Views for books selected with query params
   """
@@ -32,7 +32,7 @@ class ApiBooksWhereView(ApiObjectsWhereMixin):
             'description': 'icontains'}
 
 
-class ApiAuthorsListView(ApiMultipleObjectsMixin):
+class ApiAuthorsListView(ApiListViewMixin):
   """
   Views for list of authors
   """
@@ -40,7 +40,7 @@ class ApiAuthorsListView(ApiMultipleObjectsMixin):
   form = ApiAuthorForm
 
 
-class ApiAuthorDetailsView(ApiSingleObjectMixin):
+class ApiAuthorDetailsView(ApiDetailsMixin):
   """
   Views for operations with single author
   """
@@ -48,7 +48,7 @@ class ApiAuthorDetailsView(ApiSingleObjectMixin):
   form = ApiAuthorForm
 
 
-class ApiAuthorsWhereView(ApiObjectsWhereMixin):
+class ApiAuthorsWhereView(ApiFilteringMixin):
   """
   Views for authors selected with query params
   """
@@ -57,7 +57,7 @@ class ApiAuthorsWhereView(ApiObjectsWhereMixin):
             'name': 'icontains'}
 
 
-class ApiGenresListView(ApiMultipleObjectsMixin):
+class ApiGenresListView(ApiListViewMixin):
   """
   Views for list of genres
   """
@@ -65,7 +65,7 @@ class ApiGenresListView(ApiMultipleObjectsMixin):
   form = ApiGenreForm
 
 
-class ApiGenreDetailsView(ApiSingleObjectMixin):
+class ApiGenreDetailsView(ApiDetailsMixin):
   """
   Views for operations with single genre
   """
@@ -73,7 +73,7 @@ class ApiGenreDetailsView(ApiSingleObjectMixin):
   form = ApiGenreForm
 
 
-class ApiGenresWhereView(ApiObjectsWhereMixin):
+class ApiGenresWhereView(ApiFilteringMixin):
   """
   Views for authors selected with query params
   """
@@ -82,7 +82,7 @@ class ApiGenresWhereView(ApiObjectsWhereMixin):
             'title': 'icontains'}
 
 
-class ApiPublishersListView(ApiMultipleObjectsMixin):
+class ApiPublishersListView(ApiListViewMixin):
   """
   Views for list of publishers
   """
@@ -90,7 +90,7 @@ class ApiPublishersListView(ApiMultipleObjectsMixin):
   form = ApiPublisherForm
 
 
-class ApiPublisherDetailsView(ApiSingleObjectMixin):
+class ApiPublisherDetailsView(ApiDetailsMixin):
   """
   Views for operations with single publisher
   """
@@ -98,7 +98,7 @@ class ApiPublisherDetailsView(ApiSingleObjectMixin):
   form = ApiPublisherForm
 
 
-class ApiPublishersWhereView(ApiObjectsWhereMixin):
+class ApiPublishersWhereView(ApiFilteringMixin):
   """
   Views for authors selected with query params
   """

@@ -1,9 +1,9 @@
 from django import forms
-from django.contrib.auth.hashers import MD5PasswordHasher, make_password
+from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ValidationError
-from django.utils.crypto import md5
+from django.forms import inlineformset_factory
 
-from bookshop.models import Book, Publisher, Genre, Author, Customer, Address
+from bookshop.models import Book, Publisher, Genre, Author, Customer, Address, Order
 
 
 class ApiBookForm(forms.ModelForm):
@@ -80,6 +80,25 @@ class ApiCustomerForm(forms.ModelForm):
       },
     }
 
+  orders = forms.CharField()
+
+  def __init__(self, *args, **kwargs):
+    super(ApiCustomerForm, self).__init__(*args, **kwargs)
+    self.fields['orders'] = forms.MultipleChoiceField(
+      choices=((order.id, order) for order in Order.objects.all()),
+      required=False
+    )
+
+  def save(self, *args, **kwargs):
+    customer = super(ApiCustomerForm, self).save(*args, **kwargs)
+    orders = self.cleaned_data.get('orders')
+
+    if orders is not None:
+      customer.orders.set(Order.objects.filter(id__in=orders), clear=True)
+      customer.save()
+
+    return customer
+
   def clean_password(self) -> str:
     """ Validate length and hash given password """
     password = self.cleaned_data['password']
@@ -97,4 +116,14 @@ class ApiAddressForm(forms.ModelForm):
 
   class Meta:
     model = Address
+    fields = '__all__'
+
+
+class ApiOrderForm(forms.ModelForm):
+  """
+  Form for order creation and modification
+  """
+
+  class Meta:
+    model = Order
     fields = '__all__'

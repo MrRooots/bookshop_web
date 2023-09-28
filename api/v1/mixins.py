@@ -212,3 +212,11 @@ class ApiFilteringMixin(BaseMixin):
       'count': objects.count(),
       'result': [obj.to_json() for obj in objects]
     }, status=200)
+
+
+class ApiValidationMixin(BaseMixin):
+  """
+  Mixin for validation passed data with db
+  """
+
+

@@ -15,7 +15,7 @@ class ApiAuthMiddleware:
     response = self.get_response(request)
 
     if '/api/' in request.path:
-      if request.headers.get('API-KEY', '') != settings.API_KEY:
+      if request.headers.get('API-KEY', '') != settings.API_KEY or response.status_code == 401:
         return JsonResponse({
           'success': 0,
           'error': '401 Unauthorized'

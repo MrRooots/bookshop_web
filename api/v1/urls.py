@@ -3,6 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from api.v1.views import *
 from api.v1.views.addresses import ApiAddressesListView, ApiAddressesWhereView, ApiAddressDetailsView
+from api.v1.views.customers import ApiLoginCustomerView
 from api.v1.views.orders import ApiOrdersListView, ApiOrdersWhereView, ApiOrderDetailsView
 
 urlpatterns = [
@@ -24,10 +25,13 @@ urlpatterns = [
   path('publishers/<int:obj_id>', csrf_exempt(ApiPublisherDetailsView.as_view())),
 
   path('customers/', csrf_exempt(ApiCustomersListView.as_view())),
-  path('customers/where', csrf_exempt(ApiCustomersWhereView.as_view())),
-  path('customers/<int:obj_id>', csrf_exempt(ApiCustomerDetailsView.as_view())),
-  path('customers/<int:obj_id>/orders', csrf_exempt(ApiCustomerDetailsView.as_view())),
-  path('customers/<int:obj_id>/placeOrder', csrf_exempt(ApiCustomerDetailsView.as_view())),
+  path('customers/where/', csrf_exempt(ApiCustomersWhereView.as_view())),
+  path('customers/<int:obj_id>/', csrf_exempt(ApiCustomerDetailsView.as_view())),
+  path('customers/<int:obj_id>/orders/', csrf_exempt(ApiCustomerDetailsView.as_view())),
+  path('customers/<int:obj_id>/placeOrder/', csrf_exempt(ApiCustomerDetailsView.as_view())),
+
+  path('customers/login/', csrf_exempt(ApiLoginCustomerView.as_view())),
+  path('customers/register/', csrf_exempt(ApiCustomersListView.as_view())),
 
   path('addresses/', csrf_exempt(ApiAddressesListView.as_view())),
   path('addresses/where', csrf_exempt(ApiAddressesWhereView.as_view())),

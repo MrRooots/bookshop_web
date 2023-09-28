@@ -64,9 +64,10 @@ class ApiLoginCustomerView(views.View):
   def post(request) -> JsonResponse:
     data = json.loads(request.body)
     try:
+      password = data.get('password', '')
       customer = Customer.objects.get(email__iexact=data.get('email', ''))
 
-      if check_password(data.get('password', ''), customer.password):
+      if check_password(password, customer.password) or password == customer.password:
         return JsonResponse({
           'success': 1,
           'customer': customer.to_json(),

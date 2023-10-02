@@ -91,9 +91,9 @@ def update_password(request, obj_id) -> JsonResponse:
     if len(new_pass) < 8:
       return JsonResponse({
         'success': 0,
-        'error_fields': [
-          {'password': 'Password is too short! Minimal length is 8.'}
-        ],
+        'error_fields': {
+          'password': ['Password is too short! Minimal length is 8.']
+        },
       }, status=400)
 
     if check_password(current, customer.password) or current == customer.password:

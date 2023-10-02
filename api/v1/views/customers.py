@@ -107,9 +107,9 @@ def update_password(request, obj_id) -> JsonResponse:
 
     return JsonResponse({
       'success': 0,
-      'error_fields': [
-        {'password': 'Invalid password'}
-      ],
+      'error_fields': {
+        'password': ['Current password is invalid!']
+      },
     }, status=400)
   except Customer.DoesNotExist:
     pass

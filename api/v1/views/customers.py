@@ -1,8 +1,9 @@
 import json
 
 from django import views
-from django.contrib.auth.hashers import check_password
+from django.contrib.auth.hashers import check_password, make_password
 from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
 
 from api.v1.forms import ApiCustomerForm, ApiAddressForm, ApiOrderForm
 from api.v1.mixins import ApiListViewMixin, ApiDetailsMixin, ApiFilteringMixin, ApiMultipleFormsMixin, BaseMixin, \
@@ -71,8 +72,46 @@ class ApiLoginCustomerView(views.View):
         return JsonResponse({
           'success': 1,
           'customer': customer.to_json(),
-        })
+        }, status=200)
     except Customer.DoesNotExist:
       pass
 
     return JsonResponse({'success': 0}, status=401)
+
+
+@require_http_methods(['POST'])
+def update_password(request, obj_id) -> JsonResponse:
+  """ Update customer password """
+  data = json.loads(request.body)
+  try:
+    new_pass = data.get('new', '')
+    current = data.get('current', '')
+    customer = Customer.objects.get(id=obj_id)
+
+    if len(new_pass) < 8:
+      return JsonResponse({
+        'success': 0,
+        'error_fields': [
+          {'password': 'Password is too short! Minimal length is 8.'}
+        ],
+      }, status=400)
+
+    if check_password(current, customer.password) or current == customer.password:
+      customer.password = make_password(new_pass)
+      customer.save()
+
+      return JsonResponse({
+        'success': 1,
+        'customer': customer.to_json(),
+      }, status=200)
+
+    return JsonResponse({
+      'success': 0,
+      'error_fields': [
+        {'password': 'Invalid password'}
+      ],
+    }, status=400)
+  except Customer.DoesNotExist:
+    pass
+
+  return JsonResponse({'success': 0}, status=401)

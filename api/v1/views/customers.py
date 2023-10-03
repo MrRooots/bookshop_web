@@ -9,7 +9,7 @@ from api.v1.forms import ApiCustomerForm, ApiAddressForm, ApiOrderForm
 from api.v1.mixins import ApiListViewMixin, ApiDetailsMixin, ApiFilteringMixin, ApiMultipleFormsMixin, BaseMixin, \
   ApiValidationMixin
 
-from bookshop.models import Customer
+from bookshop.models import Customer, Address
 
 """ 
 Todo: 
@@ -110,6 +110,34 @@ def update_password(request, obj_id) -> JsonResponse:
       'error_fields': {
         'password': ['Current password is invalid!']
       },
+    }, status=400)
+  except Customer.DoesNotExist:
+    pass
+
+  return JsonResponse({'success': 0}, status=401)
+
+
+@require_http_methods(['POST'])
+def add_address(request, obj_id) -> JsonResponse:
+  """ Add address to customer """
+  data = json.loads(request.body)
+
+  try:
+    customer = Customer.objects.get(id=obj_id)
+    form = ApiAddressForm(data)  # Todo: check for duplicates
+
+    if form.is_valid():
+      customer.addresses.add(form.save())
+      customer.save()
+
+      return JsonResponse({
+        'success': 1,
+        'customer': customer.to_json(),
+      }, status=200)
+
+    return JsonResponse({
+      'success': 0,
+      'error_fields': form.errors,
     }, status=400)
   except Customer.DoesNotExist:
     pass

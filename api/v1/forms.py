@@ -104,6 +104,8 @@ class ApiCustomerForm(forms.ModelForm):
     password = self.cleaned_data['password']
 
     if len(password) >= 8:
+      if password.startswith('pbkdf2_sha256$'):
+        return password
       return make_password(password)
     else:
       raise ValidationError('Password too short! Minimum 8 characters long.')
